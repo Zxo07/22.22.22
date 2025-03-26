@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas1 և Canvas2 - Գրող և նկարող</title>
+    <style>
+        body {
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #container {
+            display: flex;
+            width: 100%;
+            height: 90%;
+            justify-content: center;
+            flex-wrap: wrap; /* Պատկերի ռեսպոնսիվ դիզայն */
+        }
+        canvas {
+            width: 48%; /* Ամեն canvas 1/2 տարածք է */
+            height: 80%; /* Փոքրացրեցինք canvas-ի բարձրությունը, որպեսզի ավելի լավ տեղավորվի էկրանին */
+            border: 1px solid black;
+            touch-action: none; /* Վերցնում է նետված մկնիկի վերլուծումը, ուղղակի բթվացում */
+        }
+        #clearButton {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            padding: 10px;
+            background-color: red;
+            color: white;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="container">
+        <!-- Առաջին canvas1-ը (նկարելու համար) -->
+        <canvas id="canvas1"></canvas>
+
+        <!-- Երկրորդ canvas2-ը (տեսնելու համար, նկարածը canvas2-ի 1 մասում) -->
+        <canvas id="canvas2"></canvas>
+    </div>
+
+    <!-- Ջնջելու կոճակ -->
+    <button id="clearButton">Ջնջել</button>
+
+    <script>
+        const canvas1 = document.getElementById("canvas1");
+        const ctx1 = canvas1.getContext("2d");
+        const canvas2 = document.getElementById("canvas2");
+        const ctx2 = canvas2.getContext("2d");
+        const clearButton = document.getElementById("clearButton");
+
+        // Սահմանում է canvas-ի չափերը
+        function setCanvasSize() {
+            const width = window.innerWidth / 2;
+            const height = window.innerHeight;
+
+            // Բաժանում է հարթակի չափը երկու մասի՝ նորմալ մեծության համար
+            canvas1.width = width;
+            canvas1.height = height;
+
+            canvas2.width = width;
+            canvas2.height = height;
+        }
+
+        // Փոխանցել նկարները localStorage-ի մեջ
+        function saveCanvasData() {
+            const imageData1 = canvas1.toDataURL(); // canvas1-ը
+            const imageData2 = canvas2.toDataURL(); // canvas2-ը
+
+            localStorage.setItem("canvas1Data", imageData1); // canvas1-ի տվյալները
+            localStorage.setItem("canvas2Data", imageData2); // canvas2-ի տվյալները
+        }
+
+        // Բեռնել canvas-ի տվյալները
+        function loadCanvasData() {
+            const imageData1 = localStorage.getItem("canvas1Data");
+            const imageData2 = localStorage.getItem("canvas2Data");
+
+            if (imageData1) {
+                const img1 = new Image();
+                img1.src = imageData1;
+                img1.onload = function() {
+                    ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+                    ctx2.drawImage(img1, 0, 0); // canvas1-ի 1 մասն էլ տեսանելի
+                };
+            }
+
+            if (imageData2) {
+                const img2 = new Image();
+                img2.src = imageData2;
+                img2.onload = function() {
+                    ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+                    ctx1.drawImage(img2, 0, 0); // canvas2-ի 1 մասն էլ տեսանելի
+                };
+            }
+        }
+
+        // Գրում ենք canvas1-ում
+        canvas1.addEventListener("mousedown", (e) => {
+            drawing = true;
+            ctx1.beginPath();
+            ctx1.moveTo(e.clientX, e.clientY);
+        });
+
+        canvas1.addEventListener("mousemove", (e) => {
+            if (drawing) {
+                ctx1.lineTo(e.clientX, e.clientY);
+                ctx1.stroke();
+            }
+        });
+
+        canvas1.addEventListener("mouseup", () => {
+            drawing = false;
+            saveCanvasData();
+        });
+
+        // Գրում ենք canvas2-ում
+        canvas2.addEventListener("mousedown", (e) => {
+            drawing = true;
+            ctx2.beginPath();
+            ctx2.moveTo(e.clientX, e.clientY);
+        });
+
+        canvas2.addEventListener("mousemove", (e) => {
+            if (drawing) {
+                ctx2.lineTo(e.clientX, e.clientY);
+                ctx2.stroke();
+            }
+        });
+
+        canvas2.addEventListener("mouseup", () => {
+            drawing = false;
+            saveCanvasData();
+        });
+
+        // Ջնջելու կոճակի ֆունկցիա
+        clearButton.addEventListener("click", () => {
+            ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+            localStorage.removeItem("canvas1Data");
+            localStorage.removeItem("canvas2Data");
+        });
+
+        // Թարմացվում է ամեն 500 միլիվարկյանում
+        setInterval(loadCanvasData, 500);
+
+        // Էկրանին օպտիմալացում
+        window.addEventListener('resize', setCanvasSize); // Բարելավում է responsive դիզայնը
+
+        // Արդյունքը՝ զանգվածների համար
+        setCanvasSize();
+    </script>
+
+</body>
+</html>
